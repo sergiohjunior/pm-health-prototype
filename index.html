@@ -58,9 +58,10 @@
 
                   <!-- LEGEND -->
                   <div class="flex items-center gap-4 text-[12px] text-zinc-500 mb-4">
-                    <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-emerald-600"></span>on track</span>
-                    <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-amber-500"></span>behind</span>
-                    <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-red-500"></span>well behind</span>
+                    <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-emerald-600"></span>&ge;95% of target</span>
+                    <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-amber-500"></span>41&ndash;94% of target</span>
+                    <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-red-500"></span>&le;40% of target</span>
+                    <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full border border-zinc-300 bg-white"></span>no target</span>
                     <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full border border-dashed border-zinc-400"></span>not live</span>
                   </div>
 
@@ -101,7 +102,7 @@
                                 </div>
                                 <template x-for="col in pmColumns" :key="row.node.id + '-' + col">
                                   <div @click.stop
-                                       :class="pmEditingCell === (row.node.id + '|' + col) ? 'bg-white' : (pmCell(row.node.id, col) ? pmCellBg(pmCell(row.node.id, col).rag) : 'bg-zinc-50/50')"
+                                       :class="pmEditingCell === (row.node.id + '|' + col) ? 'bg-white' : (pmCell(row.node.id, col) ? pmCellBg(pmCell(row.node.id, col), col) : 'bg-zinc-50/50')"
                                        class="group/cell relative px-4 py-2.5 border-l border-zinc-200 flex flex-col justify-center cursor-default">
 
                                     <!-- display mode -->
@@ -110,7 +111,7 @@
                                         <template x-if="pmCell(row.node.id, col)">
                                           <div>
                                             <span class="flex items-center gap-1.5">
-                                              <span :class="pmDot(pmCell(row.node.id, col).rag)" class="w-2 h-2 rounded-full flex-none"></span>
+                                              <span x-show="pmRag(pmCell(row.node.id, col), col)" :class="pmDot(pmCell(row.node.id, col), col)" class="w-2 h-2 rounded-full flex-none"></span>
                                               <span :class="row.depth === 0 ? 'text-[16px] text-zinc-900' : 'text-[14px] text-zinc-800'"
                                                     class="font-semibold tracking-tight" x-text="pmCell(row.node.id, col).value"></span>
                                             </span>
@@ -134,9 +135,6 @@
                                     <template x-if="pmEditingCell === (row.node.id + '|' + col)">
                                       <div @keydown.enter.stop="pmSaveCellEdit()" @keydown.escape.stop="pmCancelCellEdit()">
                                         <span class="flex items-center gap-1.5 pr-14">
-                                          <button @click.stop="pmCycleDraftCellRag()" title="Click to change status"
-                                                  :class="pmDot(pmDraftCell.rag)"
-                                                  class="w-2 h-2 rounded-full flex-none hover:ring-2 hover:ring-zinc-300"></button>
                                           <input x-model="pmDraftCell.value" x-init="$el.focus(); $el.select()" placeholder="Value" @click.stop
                                                  :class="row.depth === 0 ? 'text-[16px]' : 'text-[14px]'"
                                                  class="w-24 min-w-0 font-semibold tracking-tight border border-zinc-300 rounded px-1 bg-white">
@@ -204,7 +202,7 @@
                                   </span>
                                 </div>
                                 <template x-for="col in pmColumns" :key="row.metric.id + '-' + col">
-                                  <div :class="pmEditingCell === (row.metric.id + '|' + col) ? 'bg-white' : ''"
+                                  <div :class="pmEditingCell === (row.metric.id + '|' + col) ? 'bg-white' : (pmCell(row.metric.id, col) ? pmCellBg(pmCell(row.metric.id, col), col) : '')"
                                        class="group/cell relative px-4 py-2 border-l border-zinc-100 flex flex-col justify-center">
 
                                     <!-- display mode -->
@@ -212,7 +210,7 @@
                                       <div class="flex items-center pr-8">
                                         <template x-if="pmCell(row.metric.id, col)">
                                           <span class="flex items-center gap-1.5 text-[12px]">
-                                            <span :class="pmDot(pmCell(row.metric.id, col).rag)" class="w-2 h-2 rounded-full flex-none"></span>
+                                            <span x-show="pmRag(pmCell(row.metric.id, col), col)" :class="pmDot(pmCell(row.metric.id, col), col)" class="w-2 h-2 rounded-full flex-none"></span>
                                             <span class="font-semibold text-zinc-800" x-text="pmCell(row.metric.id, col).value"></span>
                                             <span class="text-[11px] text-zinc-400"
                                                   x-text="'target ' + (pmCell(row.metric.id, col).target || '—') + (pmCell(row.metric.id, col).caption ? ' · ' + pmCell(row.metric.id, col).caption : '')"></span>
@@ -232,9 +230,6 @@
                                     <template x-if="pmEditingCell === (row.metric.id + '|' + col)">
                                       <div @keydown.enter.stop="pmSaveCellEdit()" @keydown.escape.stop="pmCancelCellEdit()"
                                            class="flex items-center gap-1.5 pr-14 flex-wrap">
-                                        <button @click.stop="pmCycleDraftCellRag()" title="Click to change status"
-                                                :class="pmDot(pmDraftCell.rag)"
-                                                class="w-2 h-2 rounded-full flex-none hover:ring-2 hover:ring-zinc-300"></button>
                                         <input x-model="pmDraftCell.value" x-init="$el.focus(); $el.select()" placeholder="Value" @click.stop
                                                class="w-16 text-[12px] font-semibold border border-zinc-300 rounded px-1 bg-white">
                                         <span class="text-[11px] text-zinc-400">target</span>
@@ -332,7 +327,12 @@ const COUNTRIES = [
 
 const RAG_DOT = { green: 'bg-emerald-600', amber: 'bg-amber-500', red: 'bg-red-500' };
 const RAG_BG = { green: 'bg-emerald-50', amber: 'bg-amber-50', red: 'bg-red-50' };
-const RAG_CYCLE = { green: 'amber', amber: 'red', red: 'green' };
+
+// First number in a formatted string ("€15,400" → 15400, "93%" → 93). null if none.
+function parseNum(s) {
+  const m = String(s ?? '').replace(/,/g, '').match(/-?\d+(\.\d+)?/);
+  return m ? parseFloat(m[0]) : null;
+}
 
 function pm() {
   return {
@@ -454,8 +454,25 @@ function pm() {
       return '';
     },
 
-    pmDot(rag) { return RAG_DOT[rag]; },
-    pmCellBg(rag) { return RAG_BG[rag]; },
+    // RAG is DERIVED from target attainment, recomputed on every save:
+    // ≥95% green, 41–94% amber, ≤40% red; no parseable value/target → no colour.
+    // Friction counts inverted (below target = good) unless the target carries '↑';
+    // a '↓' in any target forces lower-is-better.
+    pmAtt(cell, col) {
+      if (!cell) return null;
+      const v = parseNum(cell.value), t = parseNum(cell.target);
+      if (v === null || t === null || t === 0) return null;
+      const lowerBetter = cell.target.includes('↓') || (col === 'friction' && !cell.target.includes('↑'));
+      if (lowerBetter) return v === 0 ? 999 : t / v;
+      return v / t;
+    },
+    pmRag(cell, col) {
+      const r = this.pmAtt(cell, col);
+      if (r === null) return null;
+      return r >= 0.95 ? 'green' : (r > 0.40 ? 'amber' : 'red');
+    },
+    pmDot(cell, col) { const r = this.pmRag(cell, col); return r ? RAG_DOT[r] : ''; },
+    pmCellBg(cell, col) { const r = this.pmRag(cell, col); return r ? RAG_BG[r] : 'bg-white'; },
 
     // ---- cell editing (pencil opens, check commits — writes straight to the DB) ----
     pmStartCellEdit(entityId, col) {
@@ -477,7 +494,8 @@ function pm() {
           await this.sb(`pm_cells?entity_id=eq.${entityId}&col=eq.${col}`, { method: 'DELETE' });
           if (this.pmCells[entityId]) delete this.pmCells[entityId][col];
         } else {
-          const row = { entity_id: entityId, col, rag: this.pmDraftCell.rag, value, target: this.pmDraftCell.target.trim(), caption: this.pmDraftCell.caption.trim() };
+          // rag column is legacy — colour is derived client-side from value vs target.
+          const row = { entity_id: entityId, col, rag: 'green', value, target: this.pmDraftCell.target.trim(), caption: this.pmDraftCell.caption.trim() };
           await this.sb('pm_cells', { method: 'POST', prefer: 'resolution=merge-duplicates', body: JSON.stringify(row) });
           (this.pmCells[entityId] ??= {})[col] = row;
         }
@@ -488,7 +506,6 @@ function pm() {
     },
 
     pmCancelCellEdit() { this.pmEditingCell = null; },
-    pmCycleDraftCellRag() { this.pmDraftCell.rag = RAG_CYCLE[this.pmDraftCell.rag]; },
 
     // ---- metric label editing ----
     pmStartMetricEdit(metric) {
