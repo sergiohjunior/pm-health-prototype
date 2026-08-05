@@ -441,8 +441,11 @@ function pm() {
           : (isBetGroup ? g.subs : g.subs.filter((s) => BET_SUBS.has(s.name) && !BET_LONE.has(s.name)));
         const belongs = table === 'core' ? !isBetGroup : (isBetGroup || subs.length > 0);
         if (!belongs) continue;
-        rows.push({ key: g.id, kind: 'node', node: { ...g, type: 'group' }, depth: 0 });
-        if (expanded(g.id)) subs.forEach(pushSub);
+        // A group living in BOTH tables (Credit) gets a synthetic id for its Bets row,
+        // so its roll-up cells are stored and edited independently of the Core row.
+        const node = (table === 'bets' && !isBetGroup) ? { ...g, type: 'group', id: `${g.id}:bets` } : { ...g, type: 'group' };
+        rows.push({ key: node.id, kind: 'node', node, depth: 0 });
+        if (expanded(node.id)) subs.forEach(pushSub);
       }
       if (table === 'bets') {
         for (const g of TAXONOMY) for (const s of g.subs) if (BET_LONE.has(s.name)) {
