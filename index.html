@@ -20,7 +20,7 @@ body{font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helveti
     <span x-text="pmError"></span>
     <button @click="pmError = null; pmLoad()" class="underline ml-2">retry</button>
   </div>
-  <div x-show="pmToast" x-cloak x-transition.opacity
+  <div x-show="pmToast" x-cloak
        class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-zinc-900 text-white text-[13px] px-4 py-2.5 rounded-lg shadow-lg whitespace-nowrap"
        x-text="pmToast"></div>
 <div class="px-3 sm:px-6 pt-5 pb-8">
