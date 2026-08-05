@@ -67,7 +67,7 @@ body{font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helveti
                     <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-amber-500"></span>50&ndash;80% of target</span>
                     <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-red-500"></span>&lt;50% of target</span>
                     <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full border border-zinc-300 bg-white"></span>no target</span>
-                    <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full border border-dashed border-zinc-400"></span>not live</span>
+                    <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full border border-dashed border-zinc-400"></span>TBD</span>
                   </div>
 
                   <!-- TWO TABLES (Core products / Bets), one row model. Levels 1+2 are the
@@ -126,7 +126,7 @@ body{font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helveti
                                         </template>
                                         <template x-if="!pmCell(row.node.id, col)">
                                           <span class="flex items-center gap-1.5 text-[11px] text-zinc-400">
-                                            <span class="w-2 h-2 rounded-full border border-dashed border-zinc-400 flex-none"></span> not live
+                                            <span class="w-2 h-2 rounded-full border border-dashed border-zinc-400 flex-none"></span> TBD
                                           </span>
                                         </template>
                                         <button @click.stop="pmStartCellEdit(row.node.id, col)" title="Edit metric and target"
