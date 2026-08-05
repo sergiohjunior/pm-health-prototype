@@ -353,7 +353,8 @@ function pm() {
     pmMetricRows: [],   // [{ id, sub_group_id, label }]
     pmColumns: ['activation', 'usage', 'friction'],
     pmCountries: COUNTRIES,
-    pmSelectedCountries: Object.fromEntries(COUNTRIES.map((c) => [c.id, true])),
+    // Default: only the UK selected — the chip reads the single selection's label.
+    pmSelectedCountries: Object.fromEntries(COUNTRIES.map((c) => [c.id, c.id === 'uk'])),
     pmExpandedNodes: {},
     pmCountryOpen: false,
     pmError: null,
