@@ -7,7 +7,12 @@
 <title>Product Metrics — prototype</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
-<style>[x-cloak]{display:none!important} body{font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}</style>
+<style>
+[x-cloak]{display:none!important}
+body{font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+/* Tables keep their designed width on small screens and scroll sideways instead. */
+.pm-scroll > div{min-width:880px}
+</style>
 </head>
 <body class="bg-zinc-50 text-zinc-900">
 <div x-data="pm()" x-init="pmInit()" class="min-h-screen">
@@ -15,10 +20,10 @@
     <span x-text="pmError"></span>
     <button @click="pmError = null; pmLoad()" class="underline ml-2">retry</button>
   </div>
-<div class="px-6 pt-5 pb-8">
+<div class="px-3 sm:px-6 pt-5 pb-8">
 
                   <!-- HEADER -->
-                  <div class="flex items-end justify-between mb-4">
+                  <div class="flex items-end justify-between mb-4 flex-wrap gap-y-3">
                     <div class="min-w-0">
                       <h1 class="text-[22px] font-semibold tracking-tight">Product Metrics</h1>
                       <p class="text-[13px] text-zinc-500 mt-0.5">Portfolio health — shared prototype; edits save to a live database</p>
@@ -71,7 +76,7 @@
                   <template x-for="t in pmTables()" :key="t.key">
                     <div :class="t.key === 'bets' ? 'mt-6' : ''">
                       <div class="text-[15px] font-semibold tracking-tight text-zinc-900 mb-2" x-text="t.title"></div>
-                      <div class="rounded-xl border border-zinc-200 bg-white overflow-hidden">
+                      <div class="pm-scroll rounded-xl border border-zinc-200 bg-white overflow-x-auto">
 
                         <div class="grid grid-cols-[minmax(280px,1.2fr)_1fr_1fr_1fr] border-b-2 border-zinc-200 text-[11px] uppercase tracking-wider text-zinc-400 font-semibold">
                           <div class="px-4 py-2.5">Product</div>
@@ -166,7 +171,7 @@
                             <!-- METRIC ROW (level 3 — row pencil edits the label; every column
                                  cell has its own contextual editor, independent of the others) -->
                             <template x-if="row.kind === 'metric'">
-                              <div class="group/mrow grid grid-cols-[minmax(280px,1.2fr)_1fr_1fr_1fr] border-b border-zinc-100">
+                              <div class="group/mrow grid grid-cols-[minmax(280px,1.2fr)_1fr_1fr_1fr] border-b border-zinc-100 hover:bg-zinc-50/70">
                                 <div :class="row.depth === 1 ? 'pl-9' : 'pl-12'" class="px-4 py-2 text-[12px] text-zinc-500 flex items-center gap-2"
                                      @keydown.enter.stop="pmSaveMetricEdit()" @keydown.escape.stop="pmCancelMetricEdit()">
                                   <template x-if="pmEditingMetricId === row.metric.id">
