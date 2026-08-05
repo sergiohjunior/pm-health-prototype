@@ -66,9 +66,9 @@ body{font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helveti
 
                   <!-- LEGEND -->
                   <div class="flex items-center gap-4 text-[12px] text-zinc-500 mb-4">
-                    <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-emerald-600"></span>&gt;80% of target</span>
-                    <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-amber-500"></span>50&ndash;80% of target</span>
-                    <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-red-500"></span>&lt;50% of target</span>
+                    <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-emerald-600"></span>&ge;95% of target</span>
+                    <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-amber-500"></span>41&ndash;94% of target</span>
+                    <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-red-500"></span>&le;40% of target</span>
                     <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full border border-zinc-300 bg-white"></span>no target</span>
                     <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full border border-dashed border-zinc-400"></span>TBD</span>
                   </div>
@@ -477,7 +477,7 @@ function pm() {
     },
 
     // RAG is DERIVED from target attainment, recomputed on every save:
-    // >80% green, 50–80% amber, <50% red; no parseable value/target → no colour.
+    // ≥95% green, 41–94% amber, ≤40% red; no parseable value/target → no colour.
     // Friction counts inverted (below target = good) unless the target carries '↑';
     // a '↓' in any target forces lower-is-better.
     pmAtt(cell, col) {
@@ -491,7 +491,7 @@ function pm() {
     pmRag(cell, col) {
       const r = this.pmAtt(cell, col);
       if (r === null) return null;
-      return r > 0.80 ? 'green' : (r >= 0.50 ? 'amber' : 'red');
+      return r >= 0.95 ? 'green' : (r > 0.40 ? 'amber' : 'red');
     },
     pmDot(cell, col) { const r = this.pmRag(cell, col); return r ? RAG_DOT[r] : ''; },
     pmCellBg(cell, col) { const r = this.pmRag(cell, col); return r ? RAG_BG[r] : 'bg-white group-hover/row:bg-zinc-50 group-hover/mrow:bg-zinc-50'; },
