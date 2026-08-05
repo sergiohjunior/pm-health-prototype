@@ -20,6 +20,9 @@ body{font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helveti
     <span x-text="pmError"></span>
     <button @click="pmError = null; pmLoad()" class="underline ml-2">retry</button>
   </div>
+  <div x-show="pmToast" x-cloak x-transition.opacity
+       class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-zinc-900 text-white text-[13px] px-4 py-2.5 rounded-lg shadow-lg whitespace-nowrap"
+       x-text="pmToast"></div>
 <div class="px-3 sm:px-6 pt-5 pb-8">
 
                   <!-- HEADER -->
@@ -32,7 +35,7 @@ body{font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helveti
                       <span class="text-[11px] text-zinc-400 px-1.5" x-show="pmLastSync">synced <span x-text="pmLastSync"></span></span>
                       <!-- COUNTRY FILTER -->
                       <div class="relative" @click.outside="pmCountryOpen = false">
-                        <button @click="pmCountryOpen = !pmCountryOpen"
+                        <button @click="pmCountryOpen = !pmCountryOpen; if (pmCountryOpen) pmShowToast('Filter by country is not available at the moment — coming soon')"
                                 class="flex items-center gap-1.5 text-[12px] font-medium px-2.5 py-1.5 rounded-md bg-zinc-900 text-white hover:bg-zinc-800">
                           <span x-text="pmCountryLabel()"></span>
                           <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
@@ -355,6 +358,14 @@ function pm() {
     pmCountryOpen: false,
     pmError: null,
     pmLastSync: '',
+    pmToast: null,
+    pmToastTimer: null,
+
+    pmShowToast(msg) {
+      this.pmToast = msg;
+      clearTimeout(this.pmToastTimer);
+      this.pmToastTimer = setTimeout(() => { this.pmToast = null; }, 3500);
+    },
     pmEditingCell: null,
     pmDraftCell: { rag: 'green', value: '', target: '', caption: '' },
     pmEditingMetricId: null,
