@@ -12,6 +12,17 @@
 body{font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
 /* Tables keep their designed width on small screens and scroll sideways instead. */
 .pm-scroll > div{min-width:880px}
+/* Animated expand/collapse: grid-row trick animates height both ways without JS.
+   An open top-level block also leaves a gap before the next level-1 row. */
+.pm-collapse{display:grid;grid-template-rows:0fr;transition:grid-template-rows .28s ease,padding-bottom .28s ease,border-bottom-width .28s ease}
+.pm-collapse.open{grid-template-rows:1fr}
+.pm-collapse-inner{overflow:hidden;min-height:0}
+/* The gap after an open top-level block is a visible grey strip with a bottom edge —
+   the root's own background shows through its animated padding; content stays white. */
+.pm-collapse-root{background:#ececee;padding-bottom:0;border-bottom:0 solid #d4d4d8}
+.pm-collapse-root.open{padding-bottom:11px;border-bottom-width:1px}
+.pm-collapse-root > .pm-collapse-inner{background:#fff}
+.pm-scroll > div:last-child .pm-collapse-root.open{padding-bottom:0;border-bottom-width:0}
 </style>
 </head>
 <body class="bg-zinc-50 text-zinc-900">
@@ -88,11 +99,11 @@ body{font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helveti
                           <div class="px-4 py-2.5 border-l border-zinc-200">Friction</div>
                         </div>
 
-                        <template x-for="row in pmRowsFor(t.key)" :key="row.key">
+                        <template x-for="root in pmTreeFor(t.key)" :key="root.key">
                           <div>
+                            <!-- LEVEL 1 ROW -->
+                            <template x-for="row in [{ node: root.node, depth: 0 }]" :key="root.key + ':row'">
 
-                            <!-- NODE ROW (level 1 or 2 — taxonomy, name read-only) -->
-                            <template x-if="row.kind === 'node'">
                               <div @click="pmToggleNode(t.key, row.node)"
                                    :class="row.depth === 0 ? 'bg-zinc-50/70 hover:bg-zinc-100' : 'hover:bg-zinc-50'"
                                    class="group/row grid grid-cols-[minmax(280px,1.2fr)_1fr_1fr_1fr] border-b border-zinc-200 cursor-pointer">
@@ -169,11 +180,99 @@ body{font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helveti
                                   </div>
                                 </template>
                               </div>
-                            </template>
+                                                        </template>
 
-                            <!-- METRIC ROW (level 3 — row pencil edits the label; every column
-                                 cell has its own contextual editor, independent of the others) -->
-                            <template x-if="row.kind === 'metric'">
+                            <!-- CHILDREN (animated collapse; open leaves a gap before the next level-1 row) -->
+                            <div class="pm-collapse pm-collapse-root" :class="pmNodeExpanded(t.key, root.node) ? 'open' : ''">
+                              <div class="pm-collapse-inner">
+                                <template x-for="sec in root.sections" :key="sec.key">
+                                  <div>
+                                    <!-- LEVEL 2 ROW (absent for lone-subgroup roots) -->
+                                    <template x-for="row in (sec.node ? [{ node: sec.node, depth: 1 }] : [])" :key="sec.key + ':row'">
+
+                              <div @click="pmToggleNode(t.key, row.node)"
+                                   :class="row.depth === 0 ? 'bg-zinc-50/70 hover:bg-zinc-100' : 'hover:bg-zinc-50'"
+                                   class="group/row grid grid-cols-[minmax(280px,1.2fr)_1fr_1fr_1fr] border-b border-zinc-200 cursor-pointer">
+                                <div :class="row.depth === 0 ? '' : 'pl-7'" class="px-4 py-2.5 flex items-center gap-2 flex-wrap">
+                                  <svg :class="[pmNodeExpanded(t.key, row.node) ? 'rotate-90' : '', row.depth === 0 ? 'w-3.5 h-3.5' : 'w-3 h-3']"
+                                       class="text-zinc-400 transition-transform flex-none"
+                                       viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+                                  <span :class="row.depth === 0 ? 'text-[14px] text-zinc-900' : 'text-[13px] text-zinc-800'"
+                                        class="font-semibold" x-text="row.node.name"></span>
+                                  <span x-show="t.key === 'bets' && row.depth === 0"
+                                        class="text-[8.5px] font-mono uppercase tracking-wide px-1 py-0.5 rounded bg-indigo-50 text-indigo-700">Bet</span>
+                                  <span x-show="row.node.status === 'draft'"
+                                        class="text-[8.5px] font-mono uppercase tracking-wide px-1 py-0.5 rounded bg-zinc-100 text-zinc-500">Coming soon</span>
+                                  <span x-show="pmBlurb(row.node.id)" class="basis-full text-[11px] text-zinc-400 font-normal pl-5" x-text="pmBlurb(row.node.id)"></span>
+                                </div>
+                                <template x-for="col in pmColumns" :key="row.node.id + '-' + col">
+                                  <div @click.stop
+                                       :class="pmEditingCell === (row.node.id + '|' + col) ? 'bg-white' : (pmCell(row.node.id, col) ? pmCellBg(pmCell(row.node.id, col), col) : 'bg-zinc-50/50 group-hover/row:bg-zinc-100')"
+                                       class="group/cell relative px-4 py-2.5 border-l border-zinc-200 flex flex-col justify-center cursor-default">
+
+                                    <!-- display mode -->
+                                    <template x-if="pmEditingCell !== (row.node.id + '|' + col)">
+                                      <div>
+                                        <template x-if="pmCell(row.node.id, col)">
+                                          <div>
+                                            <span class="flex items-center gap-1.5">
+                                              <span x-show="pmRag(pmCell(row.node.id, col), col)" :class="pmDot(pmCell(row.node.id, col), col)" class="w-2 h-2 rounded-full flex-none"></span>
+                                              <span :class="row.depth === 0 ? 'text-[16px] text-zinc-900' : 'text-[14px] text-zinc-800'"
+                                                    class="font-semibold tracking-tight" x-text="pmCell(row.node.id, col).value"></span>
+                                            </span>
+                                            <span class="block text-[11px] text-zinc-500 mt-0.5"
+                                                  x-text="'target ' + (pmCell(row.node.id, col).target || '—') + (pmCell(row.node.id, col).caption ? ' · ' + pmCell(row.node.id, col).caption : '')"></span>
+                                          </div>
+                                        </template>
+                                        <template x-if="!pmCell(row.node.id, col)">
+                                          <span class="flex items-center gap-1.5 text-[11px] text-zinc-400">
+                                            <span class="w-2 h-2 rounded-full border border-dashed border-zinc-400 flex-none"></span> TBD
+                                          </span>
+                                        </template>
+                                        <button @click.stop="pmStartCellEdit(row.node.id, col)" title="Edit metric and target"
+                                                class="absolute top-1.5 right-1.5 p-1 rounded hover:bg-white/80 text-zinc-400 hover:text-zinc-700 opacity-0 group-hover/cell:opacity-100">
+                                          <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/></svg>
+                                        </button>
+                                      </div>
+                                    </template>
+
+                                    <!-- edit mode: same layout, inputs in place, check commits -->
+                                    <template x-if="pmEditingCell === (row.node.id + '|' + col)">
+                                      <div @keydown.enter.stop="pmSaveCellEdit()" @keydown.escape.stop="pmCancelCellEdit()">
+                                        <span class="flex items-center gap-1.5 pr-14">
+                                          <input x-model="pmDraftCell.value" x-init="$el.focus(); $el.select()" placeholder="Value" @click.stop
+                                                 :class="row.depth === 0 ? 'text-[16px]' : 'text-[14px]'"
+                                                 class="w-24 min-w-0 font-semibold tracking-tight border border-zinc-300 rounded px-1 bg-white">
+                                        </span>
+                                        <span class="text-[11px] text-zinc-500 mt-1 flex items-center gap-1 flex-wrap">
+                                          <span>target</span>
+                                          <input x-model="pmDraftCell.target" placeholder="Target" @click.stop
+                                                 class="w-16 text-[11px] border border-zinc-300 rounded px-1 bg-white">
+                                          <input x-model="pmDraftCell.caption" placeholder="Description" @click.stop
+                                                 class="flex-1 min-w-[110px] text-[11px] border border-zinc-300 rounded px-1 bg-white">
+                                        </span>
+                                        <span class="absolute top-1.5 right-1.5 flex items-center gap-0.5">
+                                          <button @click.stop="pmSaveCellEdit()" title="Save"
+                                                  class="p-1 rounded bg-lime-400 hover:bg-lime-500 text-zinc-900">
+                                            <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+                                          </button>
+                                          <button @click.stop="pmCancelCellEdit()" title="Cancel"
+                                                  class="p-1 rounded hover:bg-zinc-100 text-zinc-400 hover:text-zinc-700">
+                                            <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                                          </button>
+                                        </span>
+                                      </div>
+                                    </template>
+                                  </div>
+                                </template>
+                              </div>
+                                                                </template>
+
+                                    <!-- LEVEL 3 (animated collapse) -->
+                                    <div class="pm-collapse" :class="(!sec.node || pmNodeExpanded(t.key, sec.node)) ? 'open' : ''">
+                                      <div class="pm-collapse-inner">
+                                        <template x-for="row in pmMetricsFor(sec.subGroupId).map(m => ({ metric: m, depth: sec.metricDepth }))" :key="row.metric.id">
+
                               <div class="group/mrow grid grid-cols-[minmax(280px,1.2fr)_1fr_1fr_1fr] border-b border-zinc-100 hover:bg-zinc-50/70">
                                 <div :class="row.depth === 1 ? 'pl-9' : 'pl-12'" class="px-4 py-2 text-[12px] text-zinc-500 flex items-center gap-2"
                                      @keydown.enter.stop="pmSaveMetricEdit()" @keydown.escape.stop="pmCancelMetricEdit()">
@@ -260,10 +359,9 @@ body{font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helveti
                                   </div>
                                 </template>
                               </div>
-                            </template>
+                                                                    </template>
+                                        <template x-for="row in [{ subGroupId: sec.subGroupId, depth: sec.metricDepth }]" :key="sec.key + ':add'">
 
-                            <!-- ADD METRIC ROW (label only — cells are filled per column afterwards) -->
-                            <template x-if="row.kind === 'add'">
                               <div>
                                 <div x-show="pmAddingFor === row.subGroupId" x-cloak
                                      @keydown.enter.stop="pmSaveNewMetric()" @keydown.escape.stop="pmCancelAddMetric()"
@@ -284,8 +382,13 @@ body{font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helveti
                                   </button>
                                 </div>
                               </div>
-                            </template>
-
+                                                                    </template>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </template>
+                              </div>
+                            </div>
                           </div>
                         </template>
                       </div>
@@ -420,6 +523,29 @@ function pm() {
         { key: 'core', title: 'Core products' },
         { key: 'bets', title: 'Bets' },
       ];
+    },
+
+    // Nested tree for one table: roots (level 1) with sections (level 2 + its metrics).
+    // Children stay mounted and collapse via CSS, so open/close animates both ways.
+    pmTreeFor(table) {
+      const roots = [];
+      for (const g of TAXONOMY) {
+        if (HIDDEN_GROUPS.has(g.name)) continue;
+        const isBetGroup = BET_GROUPS.has(g.name);
+        const subs = table === 'core'
+          ? (isBetGroup ? [] : g.subs.filter((s) => !BET_SUBS.has(s.name)))
+          : (isBetGroup ? g.subs : g.subs.filter((s) => BET_SUBS.has(s.name) && !BET_LONE.has(s.name)));
+        const belongs = table === 'core' ? !isBetGroup : (isBetGroup || subs.length > 0);
+        if (!belongs) continue;
+        const node = (table === 'bets' && !isBetGroup) ? { ...g, type: 'group', id: `${g.id}:bets` } : { ...g, type: 'group' };
+        roots.push({ key: node.id, node, sections: subs.map((s) => ({ key: s.id, node: s, subGroupId: s.id, metricDepth: 2 })) });
+      }
+      if (table === 'bets') {
+        for (const g of TAXONOMY) for (const s of g.subs) if (BET_LONE.has(s.name)) {
+          roots.push({ key: s.id, node: s, sections: [{ key: `${s.id}:m`, node: null, subGroupId: s.id, metricDepth: 1 }] });
+        }
+      }
+      return roots;
     },
 
     pmRowsFor(table) {
